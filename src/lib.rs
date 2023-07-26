@@ -2,13 +2,13 @@ use std::{
     collections::HashSet,
     fs::{File, OpenOptions},
     io::{BufRead, BufReader, BufWriter, Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 /// `MyFile` to store path along with file
 #[derive(Debug)]
 pub struct MyFile {
-    path: String,
+    path: PathBuf,
     file: File,
 }
 
@@ -46,7 +46,6 @@ pub fn write_tmp_files<R: BufRead>(reader: &mut R, tmp_path: &Path) -> Vec<MyFil
             .unwrap();
 
         let mut writer = BufWriter::new(tmp_file);
-
         writer.write_all(l.as_bytes()).unwrap();
         writer.write_all(b"\n").unwrap();
         writer.flush().unwrap();
@@ -56,18 +55,18 @@ pub fn write_tmp_files<R: BufRead>(reader: &mut R, tmp_path: &Path) -> Vec<MyFil
 
     for path in set {
         files.push(MyFile {
-            path: path.to_str().unwrap().to_string(),
             file: File::open(&path).unwrap(),
+            path,
         });
     }
-
-    // sort files by file name
-    files.sort_by(|a, b| a.path.cmp(&b.path));
 
     files
 }
 
-pub fn sort_files<W: Write>(files: Vec<MyFile>, output_writer: &mut W) {
+pub fn sort_files<W: Write>(mut files: Vec<MyFile>, output_writer: &mut W) {
+    // sort files by file name
+    files.sort_by(|a, b| a.path.cmp(&b.path));
+
     for my_file in files {
         let mut reader = BufReader::new(my_file.file);
 
