@@ -52,13 +52,26 @@ fn main() {
     println!("Finished!");
 }
 
-// #[cfg(test)]
-// mod test {
-//     const EXPECTED_ANSWER: &[u8; 179] = include_bytes!("../test/correct.txt");
-//     const TEST_FILE: &[u8; 179] = include_bytes!("../test/test.txt");
+#[cfg(test)]
+mod test {
+    use large_txt_file_sorter::{sort_files, write_tmp_files};
+    use std::io::{BufReader, BufWriter};
 
-//     #[test]
-//     fn see() {
+    const EXPECTED_ANSWER: &[u8; 190] = include_bytes!("../test/correct.txt");
+    const TEST_FILE: &[u8; 189] = include_bytes!("../test/text.txt");
 
-//     }
-// }
+    #[test]
+    fn integration_test() {
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let tmp_path = tmp_dir.path();
+
+        let mut reader = BufReader::new(&TEST_FILE[..]);
+        let files = write_tmp_files(&mut reader, tmp_path);
+
+        let mut writer = BufWriter::new(Vec::with_capacity(190));
+        sort_files(files, &mut writer);
+
+        let res = writer.into_inner().unwrap();
+        assert_eq!(&res[..], EXPECTED_ANSWER);
+    }
+}
