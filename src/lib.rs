@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-/// MyFile to store path along with file
+/// `MyFile` to store path along with file
 #[derive(Debug)]
 pub struct MyFile {
     path: String,
@@ -22,10 +22,8 @@ pub fn write_tmp_files<R: BufRead>(reader: &mut R, tmp_path: &Path) -> Vec<MyFil
         let l = line.unwrap();
         let first_char = l.chars().next();
 
-        let first_char = match first_char {
-            Some(c) => c,
-            None => continue,
-        };
+        // Ignore if blank
+        let Some(first_char) = first_char else { continue };
 
         // Some chars are invalid names as a file. We stick them into '-' as a fallback
         let first_char = if first_char.is_alphanumeric() {
@@ -35,7 +33,7 @@ pub fn write_tmp_files<R: BufRead>(reader: &mut R, tmp_path: &Path) -> Vec<MyFil
         };
 
         #[cfg(debug_assertions)]
-        println!("{l}\t{first_char}");
+        println!("{first_char}\t{l}");
 
         let path_str = format!("{}{}", first_char, ".txt");
         let file_path = tmp_path.join(&path_str);
@@ -64,7 +62,7 @@ pub fn write_tmp_files<R: BufRead>(reader: &mut R, tmp_path: &Path) -> Vec<MyFil
     }
 
     // sort files by file name
-    files.sort_by_key(|f| f.path.clone());
+    files.sort_by(|a, b| a.path.cmp(&b.path));
 
     files
 }
@@ -74,10 +72,12 @@ pub fn sort_files<W: Write>(files: Vec<MyFile>, output_writer: &mut W) {
         let mut reader = BufReader::new(my_file.file);
 
         let mut buf = String::new();
-        reader.read_to_string(&mut buf).unwrap();
+        reader
+            .read_to_string(&mut buf)
+            .expect("Expected tmpfile to have content");
 
         let mut res = buf.lines().collect::<Vec<_>>();
-        res.sort();
+        res.sort_unstable();
         let res = res.join("\n");
 
         output_writer.write_all(res.as_bytes()).unwrap();
