@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-/// MY OWN FUCKING FILE GRR GRR
+/// MyFile to store path along with file
 #[derive(Debug)]
 pub struct MyFile {
     path: String,
@@ -70,7 +70,6 @@ pub fn write_tmp_files<R: BufRead>(reader: &mut R, tmp_path: &Path) -> Vec<MyFil
 }
 
 pub fn sort_files<W: Write>(files: Vec<MyFile>, output_writer: &mut W) {
-    // Sort dem fuckin files
     for my_file in files {
         let mut reader = BufReader::new(my_file.file);
 
