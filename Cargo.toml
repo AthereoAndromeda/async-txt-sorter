@@ -1,5 +1,5 @@
 [package]
-name = "mamap"
+name = "large-txt-file-sorter"
 version = "0.1.0"
 edition = "2021"
 

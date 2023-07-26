@@ -173,6 +173,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "large-txt-file-sorter"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "tempfile",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -183,14 +191,6 @@ name = "linux-raw-sys"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
-
-[[package]]
-name = "mamap"
-version = "0.1.0"
-dependencies = [
- "clap",
- "tempfile",
-]
 
 [[package]]
 name = "once_cell"
