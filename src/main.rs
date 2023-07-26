@@ -1,4 +1,8 @@
-use std::path::Path;
+use std::{
+    fs::{File, OpenOptions},
+    io::{BufReader, BufWriter},
+    path::Path,
+};
 
 use clap::Parser;
 use large_txt_file_sorter::{sort_files, write_tmp_files};
@@ -26,11 +30,24 @@ fn main() {
     let tmp_dir = tempfile::tempdir().unwrap();
     let tmp_path = tmp_dir.path();
 
+    let file = File::open(&args.path).unwrap();
+    let mut reader = BufReader::new(file);
+
     println!("Reading file...");
-    let files = write_tmp_files(&args.path, tmp_path);
+    let files = write_tmp_files(&mut reader, tmp_path);
+
+    let output_file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(output_path)
+        .unwrap();
+
+    let mut output_writer = BufWriter::new(output_file);
 
     println!("Sorting Files...");
-    sort_files(files, &output_path);
+    sort_files(files, &mut output_writer);
 
     println!("Finished!");
 }

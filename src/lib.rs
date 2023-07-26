@@ -12,12 +12,10 @@ pub struct MyFile {
     file: File,
 }
 
-pub fn write_tmp_files(file_path: &str, tmp_path: &Path) -> Vec<MyFile> {
+pub fn write_tmp_files<R: BufRead>(reader: &mut R, tmp_path: &Path) -> Vec<MyFile> {
     // Push unique file names
     let mut set = HashSet::new();
 
-    let file = File::open(file_path).unwrap();
-    let reader = BufReader::new(file);
     let mut files = Vec::new();
 
     for line in reader.lines() {
@@ -71,16 +69,7 @@ pub fn write_tmp_files(file_path: &str, tmp_path: &Path) -> Vec<MyFile> {
     files
 }
 
-pub fn sort_files(files: Vec<MyFile>, output_path: &Path) {
-    let output_file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .truncate(true)
-        .open(output_path)
-        .unwrap();
-
-    let mut output_writer = BufWriter::new(output_file);
-
+pub fn sort_files<W: Write>(files: Vec<MyFile>, output_writer: &mut W) {
     // Sort dem fuckin files
     for my_file in files {
         let mut reader = BufReader::new(my_file.file);
