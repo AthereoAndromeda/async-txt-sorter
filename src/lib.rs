@@ -1,8 +1,8 @@
 pub mod slow;
 pub mod standard;
 
+use slow::NamedReader;
 use std::path::Path;
-
 use tokio::{
     fs::File,
     io::{self, BufReader},
@@ -11,7 +11,7 @@ use tokio::{
 #[derive(Debug)]
 pub enum ReadResult {
     StandardReadResult(Vec<String>),
-    SlowReadResult(Vec<BufReader<File>>),
+    SlowReadResult(Vec<NamedReader<File>>),
 }
 
 #[derive(Debug, Clone, Copy)]

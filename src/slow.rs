@@ -1,5 +1,9 @@
 use rayon::slice::ParallelSliceMut;
-use std::{collections::HashMap, io::SeekFrom, path::Path};
+use std::{
+    collections::HashMap,
+    io::SeekFrom,
+    path::{Path, PathBuf},
+};
 use tokio::{
     fs::{File, OpenOptions},
     io::{
@@ -8,14 +12,20 @@ use tokio::{
     },
 };
 
+/// Tokio BufReader but with a path attached
+#[derive(Debug)]
+pub struct NamedReader<T> {
+    path: PathBuf,
+    reader: BufReader<T>,
+}
+
 /// Reads file but much more slowly, but with lower memory consumption since
 /// the file contents are stored in tmpfiles within storage.
-pub async fn read<R: AsyncBufRead + Unpin>(
-    reader: R,
-    tmpdir_path: &Path,
-) -> io::Result<Vec<BufReader<File>>> {
+pub async fn read<R>(reader: R, tmpdir_path: &Path) -> io::Result<Vec<NamedReader<File>>>
+where
+    R: AsyncBufRead + Unpin,
+{
     log::info!("Performing slow read...");
-
     let mut lines = reader.lines();
 
     // Avoid duplicating tmpfiles. At top scope to keep the files persisting.
@@ -39,20 +49,20 @@ pub async fn read<R: AsyncBufRead + Unpin>(
 
         let path = tmpdir_path.join(&format!("{}.txt", first_char));
 
-        if !map.contains_key(&first_char) {
+        if !map.contains_key(&path) {
             let file = OpenOptions::new()
                 .read(true)
                 .write(true)
                 .create(true)
-                .open(path)
+                .open(&path)
                 .await
                 .unwrap();
 
             let writer = BufWriter::new(file);
-            map.insert(first_char.clone(), writer);
+            map.insert(path.clone(), writer);
         }
 
-        let writer = map.get_mut(&first_char).unwrap();
+        let writer = map.get_mut(&path).unwrap();
         writer.write_all(line.as_bytes()).await?;
         writer.write_all(b"\n").await?;
     }
@@ -60,24 +70,33 @@ pub async fn read<R: AsyncBufRead + Unpin>(
     let mut files = Vec::new();
 
     // Flush values
-    for (_, mut writer) in map {
+    for (path, mut writer) in map {
         writer.flush().await?;
         let mut f = writer.into_inner();
 
         // Reset Cursor
         f.seek(SeekFrom::Start(0)).await?;
-        files.push(BufReader::new(f));
+
+        files.push(NamedReader {
+            path,
+            reader: BufReader::new(f),
+        });
     }
 
     Ok(files)
 }
 
-pub async fn sort(read_result: Vec<BufReader<File>>, output_path: &Path) {
+pub async fn sort(mut read_result: Vec<NamedReader<File>>, output_path: &Path) {
     log::info!("Sorting and Writing...");
     let mut output_writer = BufWriter::new(File::create(output_path).await.unwrap());
 
-    for mut reader in read_result {
+    // sort alphabetically
+    read_result.sort_by(|a, b| a.path.cmp(&b.path));
+
+    for named_reader in read_result {
         let mut buf = String::new();
+
+        let mut reader = named_reader.reader;
         reader.read_to_string(&mut buf).await.unwrap();
 
         let mut s_vec = buf.split("\n").collect::<Vec<_>>();
