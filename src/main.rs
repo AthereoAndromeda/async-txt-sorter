@@ -1,7 +1,7 @@
 mod args;
 
 use args::Args;
-use async_txt_sorter::{read_start, slow, standard, MemoryMode, ReadResult};
+use async_txt_sorter::{read_start, slow, standard, MemoryMode, ReadResult, OUTPUT_DELIMITER};
 use clap::Parser;
 use simple_logger::SimpleLogger;
 use std::path::Path;
@@ -39,6 +39,12 @@ async fn main() {
         Some(s) => Path::new(s).to_owned(),
         None => std::env::current_dir().unwrap().join("res.txt"),
     };
+
+    let mut a = OUTPUT_DELIMITER.write().await;
+    *a = args.output_delimiter.clone();
+    drop(a);
+
+    log::debug!("Assigned Delimiter: {}", OUTPUT_DELIMITER.read().await);
 
     let input_path = Path::new(&args.path);
     let file = File::open(input_path).await.unwrap();

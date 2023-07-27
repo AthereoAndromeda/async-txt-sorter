@@ -6,7 +6,15 @@ use std::path::Path;
 use tokio::{
     fs::File,
     io::{self, BufReader},
+    sync::RwLock,
 };
+
+#[macro_use]
+extern crate lazy_static;
+
+lazy_static! {
+    pub static ref OUTPUT_DELIMITER: RwLock<String> = RwLock::new("\n".to_string());
+}
 
 #[derive(Debug)]
 pub enum ReadResult {
