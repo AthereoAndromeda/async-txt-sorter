@@ -1,10 +1,10 @@
-# large-txt-file-sorter
+# async-txt-sorter
 Just a Rust CLI app that sorts large files alphabetically
 
 ```bash
 Sorts massive files alphabetically
 
-Usage: large-txt-file-sorter [OPTIONS] <PATH>
+Usage: async-txt-sorter [OPTIONS] <PATH>
 
 Arguments:
   <PATH>  Path to file
@@ -26,7 +26,8 @@ Options:
 
 ## Why?
 Mostly started as a learning project to learn more about Rust and stuff. Also because
-I kinda needed one so I decide "hey, why not write one?"
+I kinda needed one so I decide "hey, why not write one?". Then I started to delve deep
+and learn more about async Rust and Tokio.
 
 This is a toy project, not really designed to be used in production.
 
