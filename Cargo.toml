@@ -2,6 +2,8 @@
 name = "large-txt-file-sorter"
 version = "0.1.0"
 edition = "2021"
+description = "Sort large text files quickly"
+authors = ["Angelo"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
