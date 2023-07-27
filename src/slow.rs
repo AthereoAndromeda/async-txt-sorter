@@ -91,7 +91,7 @@ pub async fn sort(mut read_result: Vec<NamedReader<File>>, output_path: &Path) {
     let mut output_writer = BufWriter::new(File::create(output_path).await.unwrap());
 
     // sort alphabetically
-    read_result.sort_by(|a, b| a.path.cmp(&b.path));
+    read_result.par_sort_by(|a, b| a.path.cmp(&b.path));
 
     for named_reader in read_result {
         let mut buf = String::new();
