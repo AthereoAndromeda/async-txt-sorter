@@ -43,26 +43,24 @@ async fn main() {
     log::info!("Finished!");
 }
 
-// #[cfg(test)]
-// mod test {
-//     use large_txt_file_sorter::{sort_files, write_tmp_files};
-//     use std::io::{BufReader, BufWriter};
+#[cfg(test)]
+mod test {
+    use rayon::slice::ParallelSliceMut;
+    use tokio::io::BufReader;
 
-//     const EXPECTED_ANSWER: &[u8; 190] = include_bytes!("../test/correct.txt");
-//     const TEST_FILE: &[u8; 189] = include_bytes!("../test/text.txt");
+    use large_txt_file_sorter::read_and_get_lines;
 
-//     #[test]
-//     fn integration_test() {
-//         let tmp_dir = tempfile::tempdir().unwrap();
-//         let tmp_path = tmp_dir.path();
+    const EXPECTED_ANSWER: &[u8; 189] = include_bytes!("../test/correct.txt");
+    const TEST_FILE: &[u8; 189] = include_bytes!("../test/text.txt");
 
-//         let mut reader = BufReader::new(&TEST_FILE[..]);
-//         let files = write_tmp_files(&mut reader, tmp_path);
+    #[tokio::test]
+    async fn integration_test() {
+        let reader = BufReader::new(&TEST_FILE[..]);
+        let mut files = read_and_get_lines(reader).await.unwrap();
 
-//         let mut writer = BufWriter::new(Vec::with_capacity(190));
-//         sort_files(files, &mut writer);
+        files.par_sort_unstable();
 
-//         let res = writer.into_inner().unwrap();
-//         assert_eq!(&res[..], EXPECTED_ANSWER);
-//     }
-// }
+        let res = files.join("\n");
+        assert_eq!(&res.as_bytes(), EXPECTED_ANSWER);
+    }
+}
