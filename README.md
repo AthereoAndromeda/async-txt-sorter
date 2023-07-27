@@ -8,11 +8,16 @@ I kinda needed one so I decide "hey, why not write one?"
 This is a toy project, not really designed to be used in production.
 
 ## Performance
-It isn't that fast (because single-threaded) for large files (around 100MB+) 
-but at least it doesn't blow up your memory. The biggest bottleneck is reading. Might improve on I/O later on.
+~~It isn't that fast (because single-threaded) for large files (around 100MB+) 
+but at least it doesn't blow up your memory. The biggest bottleneck is reading. Might improve on I/O later on.~~
 
+So I replaced it with Tokio and it became pretty fast. Shows how much of a bottleneck I/O really is.
+Problem is that all the file's content is just dumped into memory, so it can lead to high memory usage
+for very large files. Might change it eventually, dunno yet.
 
 These values aren't exact, expect fluctuation ofc. It also depends on your machinery.
+
+Compilation time is not included.
 
 Machine used:
 - CPU: AMD Ryzen 5 5600G
@@ -22,21 +27,21 @@ Machine used:
 
 `time cargo run -r ./test/text.txt`
 ```
-real    0m0.043s
-user    0m0.039s
-sys     0m0.004s
+real	0m0.054s
+user	0m0.033s
+sys     0m0.021s
 ```
 
 `time cargo run -r ./rockyou.txt` (133MB)
 ```
-real	0m36.123s
-user	0m9.108s
-sys	    0m26.883s
+real	0m3.275s
+user	0m2.875s
+sys	    0m0.270s
 ```
 
 `time cargo run -r ./realhuman_phill.txt` (683MB)
 ```
-real	2m40.218s
-user	0m40.279s
-sys	    1m59.447s
+real	0m14.242s
+user	0m12.141s
+sys	    0m1.780s
 ```
