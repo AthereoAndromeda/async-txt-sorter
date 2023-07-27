@@ -21,7 +21,7 @@ struct Args {
 
     /// Determines how the output should be joined together. Defaults to newline
     #[arg(short, long, default_value_t = String::from("\n"))]
-    result_delimiter: String,
+    output_delimiter: String,
 }
 
 #[tokio::main]
