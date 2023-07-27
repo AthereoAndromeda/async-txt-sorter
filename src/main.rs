@@ -1,5 +1,5 @@
 use clap::Parser;
-use large_txt_file_sorter::{read_start, slow_sort, standard_sort, MemoryMode, ReadResult};
+use large_txt_file_sorter::{read_start, slow, standard, MemoryMode, ReadResult};
 use simple_logger::SimpleLogger;
 use std::path::Path;
 use tokio::fs::File;
@@ -77,17 +77,16 @@ async fn main() {
     let tmpdir_path = tmpdir.path();
 
     match read_start(memory_mode, file, tmpdir_path).await.unwrap() {
-        ReadResult::SlowReadResult(r) => slow_sort(r, &output_path).await,
-        ReadResult::StandardReadResult(r) => standard_sort(r, &output_path).await,
+        ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await,
+        ReadResult::StandardReadResult(r) => standard::sort(r, &output_path).await,
     };
 }
 
 #[cfg(test)]
 mod test {
+    use large_txt_file_sorter::standard;
     use rayon::slice::ParallelSliceMut;
     use tokio::io::BufReader;
-
-    use large_txt_file_sorter::read_standard;
 
     const EXPECTED_ANSWER: &[u8; 189] = include_bytes!("../test/correct.txt");
     const TEST_FILE: &[u8; 189] = include_bytes!("../test/text.txt");
@@ -95,7 +94,7 @@ mod test {
     #[tokio::test]
     async fn integration_test() {
         let reader = BufReader::new(&TEST_FILE[..]);
-        let mut files = read_standard(reader).await.unwrap();
+        let mut files = standard::read(reader).await.unwrap();
 
         files.par_sort_unstable();
 
