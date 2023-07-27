@@ -1,5 +1,28 @@
 # large-txt-file-sorter
-Just a Rust CLI app that sorts large files alphabetically (somewhat inefficently)
+Just a Rust CLI app that sorts large files alphabetically
+
+```bash
+Sorts massive files alphabetically
+
+Usage: large-txt-file-sorter [OPTIONS] <PATH>
+
+Arguments:
+  <PATH>  Path to file
+
+Options:
+  -o, --output <OUTPUT_PATH>
+          Output path. Defaults to res.txt
+  -d, --delimiter <DELIMITER>
+          Determines on which character to split the file to. Defaults to newline [default: "\n"]
+  -D, --output-delimiter <OUTPUT_DELIMITER>
+          Determines how the output should be joined together. Defaults to newline [default: "\n"]
+  -L, --low-memory-mode
+          Lowers memory usage, but takes a lot longer. Disabled by default, but enables if the file is larger than 500MB
+  -l, --disable-low-memory-mode
+          Disables low memory usage even for files larger than 500MB. Has no effect for files under 500MB
+  -h, --help
+          Print help
+```
 
 ## Why?
 Mostly started as a learning project to learn more about Rust and stuff. Also because
