@@ -1,8 +1,9 @@
 use clap::Parser;
-use large_txt_file_sorter::read_file;
+use large_txt_file_sorter::read_and_get_lines;
 use rayon::prelude::*;
 use simple_logger::SimpleLogger;
 use std::path::Path;
+use tokio::{fs::File, io::BufReader};
 
 /// Sorts massive files alphabetically
 #[derive(Parser, Debug)]
@@ -26,7 +27,10 @@ async fn main() {
     };
 
     let input_path = Path::new(&args.path);
-    let mut content = read_file(input_path).await.unwrap();
+    let file = File::open(input_path).await.unwrap();
+    let reader = BufReader::new(file);
+
+    let mut content = read_and_get_lines(reader).await.unwrap();
 
     log::info!("Sorting...");
     content.par_sort_unstable();
