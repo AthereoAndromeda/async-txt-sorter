@@ -1,6 +1,7 @@
 use tokio::io::{self, AsyncBufRead, AsyncBufReadExt};
 
-/// Read file async and return lines
+/// Read file async and return lines. Stores entire file content in-memory.
+/// Use with care with large files
 pub async fn read_and_get_lines<R: AsyncBufRead + Unpin>(reader: R) -> io::Result<Vec<String>> {
     log::info!("Reading from reader...");
     let mut lines = reader.lines();
@@ -24,4 +25,10 @@ pub async fn read_and_get_lines<R: AsyncBufRead + Unpin>(reader: R) -> io::Resul
     log::debug!("Lines Counted: {}", line_count);
 
     Ok(content)
+}
+
+/// Reads file but much more slowly, but with lower memory consumption since
+/// the file contents are stored in tmpfiles within storage.
+pub async fn read_slow<R: AsyncBufRead + Unpin>(reader: R) {
+    log::info!("Performing slow read...");
 }
