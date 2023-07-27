@@ -34,21 +34,69 @@ struct Args {
     disable_low_memory_mode: bool,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum MemoryMode {
+    Standard,
+    Low,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SortingStrategy {
+    Alphabetical,
+}
+
+fn get_memory_mode(args: &Args, file_size: u64) -> MemoryMode {
+    const THRESHOLD: u64 = 1000 * 1000 * 500; // 500MB
+
+    // Disallow simulataneously using disable_lmm and lmm flags
+    if args.low_memory_mode && args.disable_low_memory_mode {
+        log::error!("You cannot have both --low-memory-mode and --disable-low-memory-mode flag active at the same time!");
+        panic!("Incompatible flags active together.");
+    }
+
+    let mut is_low_memory_mode_enabled = args.low_memory_mode && !args.disable_low_memory_mode;
+
+    // Enable for files 500MB+
+    if file_size > THRESHOLD && !args.disable_low_memory_mode {
+        is_low_memory_mode_enabled = true;
+    }
+
+    if is_low_memory_mode_enabled {
+        MemoryMode::Low
+    } else {
+        MemoryMode::Standard
+    }
+}
+
 #[tokio::main]
 async fn main() {
     SimpleLogger::new().env().init().unwrap();
     let args = Args::parse();
 
-    let output_path = match args.output {
-        Some(s) => Path::new(&s).to_owned(),
+    let output_path = match &args.output {
+        Some(s) => Path::new(s).to_owned(),
         None => std::env::current_dir().unwrap().join("res.txt"),
     };
 
     let input_path = Path::new(&args.path);
     let file = File::open(input_path).await.unwrap();
-    let reader = BufReader::new(file);
 
-    let mut content = read_and_get_lines(reader).await.unwrap();
+    let file_size = file.metadata().await.unwrap().len();
+
+    let memory_mode = get_memory_mode(&args, file_size);
+
+    let mut content = match memory_mode {
+        MemoryMode::Low => {
+            log::info!("Memory Mode: Low");
+            todo!()
+        }
+        MemoryMode::Standard => {
+            log::info!("Memory Mode: Standard");
+            let reader = BufReader::new(file);
+            let content = read_and_get_lines(reader).await.unwrap();
+            content
+        }
+    };
 
     log::info!("Sorting...");
     content.par_sort_unstable();
