@@ -1,5 +1,6 @@
 use clap::Parser;
 use large_txt_file_sorter::read_file;
+use rayon::prelude::*;
 use simple_logger::SimpleLogger;
 use std::path::Path;
 
@@ -28,7 +29,7 @@ async fn main() {
     let mut content = read_file(input_path).await.unwrap();
 
     log::info!("Sorting...");
-    content.sort_unstable();
+    content.par_sort_unstable();
 
     log::info!("Writing Output...");
     tokio::fs::write(output_path, content.join("\n").as_bytes())
