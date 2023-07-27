@@ -1,5 +1,5 @@
+use async_txt_sorter::{read_start, slow, standard, MemoryMode, ReadResult};
 use clap::Parser;
-use large_txt_file_sorter::{read_start, slow, standard, MemoryMode, ReadResult};
 use simple_logger::SimpleLogger;
 use std::path::Path;
 use tokio::fs::File;
@@ -88,7 +88,7 @@ async fn main() {
 
 #[cfg(test)]
 mod test {
-    use large_txt_file_sorter::standard;
+    use async_txt_sorter::standard;
     use rayon::slice::ParallelSliceMut;
     use tokio::io::BufReader;
 

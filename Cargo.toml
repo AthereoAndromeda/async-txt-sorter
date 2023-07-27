@@ -1,5 +1,5 @@
 [package]
-name = "large-txt-file-sorter"
+name = "async-txt-sorter"
 version = "0.1.0"
 edition = "2021"
 description = "Sort large text files quickly"
