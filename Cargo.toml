@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.3.19", features = ["derive"] }
 log = "0.4.19"
-psutil = { version = "3.2.2", features = ["memory"] }
 rayon = "1.7.0"
 simple_logger = "4.2.0"
 tempfile = "3.7.0"
