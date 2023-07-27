@@ -5,7 +5,7 @@ use async_txt_sorter::{read_start, slow, standard, MemoryMode, ReadResult};
 use clap::Parser;
 use simple_logger::SimpleLogger;
 use std::path::Path;
-use tokio::fs::File;
+use tokio::{fs::File, io};
 
 fn get_memory_mode(args: &Args, file_size: u64) -> MemoryMode {
     const THRESHOLD: u64 = 1000 * 1000 * 500; // 500MB
@@ -30,6 +30,17 @@ fn get_memory_mode(args: &Args, file_size: u64) -> MemoryMode {
     }
 }
 
+pub async fn recurse(input_path: &Path) -> io::Result<()> {
+    log::info!("Entering Recursive Mode...");
+    let mut dir = tokio::fs::read_dir(input_path).await?;
+
+    while let Some(file) = dir.next_entry().await? {
+        log::info!("{}", file.file_name().to_str().unwrap());
+    }
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     SimpleLogger::new().env().init().unwrap();
@@ -42,7 +53,14 @@ async fn main() {
 
     let input_path = Path::new(&args.path);
     let file = File::open(input_path).await.unwrap();
-    let file_size = file.metadata().await.unwrap().len();
+    let file_metadata = file.metadata().await.unwrap();
+    let file_size = file_metadata.len();
+
+    // Do recursive sorting
+    if file_metadata.is_dir() {
+        recurse(input_path).await.unwrap();
+        return;
+    }
 
     let memory_mode = get_memory_mode(&args, file_size);
 

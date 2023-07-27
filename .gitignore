@@ -6,3 +6,5 @@ aaaaa.txt
 test.txt
 res.txt
 .vscode
+/res/*
+/rtt/*
