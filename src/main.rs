@@ -14,6 +14,14 @@ struct Args {
     /// Output path. Defaults to res.txt
     #[arg(short, long)]
     output: Option<String>,
+
+    /// Determines on which character to split the file to. Defaults to newline
+    #[arg(short, long, default_value_t = String::from("\n"))]
+    delimiter: String,
+
+    /// Determines how the output should be joined together. Defaults to newline
+    #[arg(short, long, default_value_t = String::from("\n"))]
+    result_delimiter: String,
 }
 
 #[tokio::main]
