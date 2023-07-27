@@ -1,9 +1,8 @@
 use clap::Parser;
-use large_txt_file_sorter::read_and_get_lines;
-use rayon::prelude::*;
+use large_txt_file_sorter::{read_start, slow_sort, standard_sort, MemoryMode, ReadResult};
 use simple_logger::SimpleLogger;
 use std::path::Path;
-use tokio::{fs::File, io::BufReader};
+use tokio::fs::File;
 
 /// Sorts massive files alphabetically
 #[derive(Parser, Debug)]
@@ -32,17 +31,6 @@ struct Args {
     /// under 500MB
     #[arg(short = 'l', long)]
     disable_low_memory_mode: bool,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum MemoryMode {
-    Standard,
-    Low,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum SortingStrategy {
-    Alphabetical,
 }
 
 fn get_memory_mode(args: &Args, file_size: u64) -> MemoryMode {
@@ -80,33 +68,18 @@ async fn main() {
 
     let input_path = Path::new(&args.path);
     let file = File::open(input_path).await.unwrap();
-
     let file_size = file.metadata().await.unwrap().len();
 
     let memory_mode = get_memory_mode(&args, file_size);
 
-    let mut content = match memory_mode {
-        MemoryMode::Low => {
-            log::info!("Memory Mode: Low");
-            todo!()
-        }
-        MemoryMode::Standard => {
-            log::info!("Memory Mode: Standard");
-            let reader = BufReader::new(file);
-            let content = read_and_get_lines(reader).await.unwrap();
-            content
-        }
+    // Persist tmpdir at top scope
+    let tmpdir = tempfile::tempdir().unwrap();
+    let tmpdir_path = tmpdir.path();
+
+    match read_start(memory_mode, file, tmpdir_path).await.unwrap() {
+        ReadResult::SlowReadResult(r) => slow_sort(r, &output_path).await,
+        ReadResult::StandardReadResult(r) => standard_sort(r, &output_path).await,
     };
-
-    log::info!("Sorting...");
-    content.par_sort_unstable();
-
-    log::info!("Writing Output...");
-    tokio::fs::write(output_path, content.join("\n").as_bytes())
-        .await
-        .unwrap();
-
-    log::info!("Finished!");
 }
 
 #[cfg(test)]
@@ -114,7 +87,7 @@ mod test {
     use rayon::slice::ParallelSliceMut;
     use tokio::io::BufReader;
 
-    use large_txt_file_sorter::read_and_get_lines;
+    use large_txt_file_sorter::read_standard;
 
     const EXPECTED_ANSWER: &[u8; 189] = include_bytes!("../test/correct.txt");
     const TEST_FILE: &[u8; 189] = include_bytes!("../test/text.txt");
@@ -122,7 +95,7 @@ mod test {
     #[tokio::test]
     async fn integration_test() {
         let reader = BufReader::new(&TEST_FILE[..]);
-        let mut files = read_and_get_lines(reader).await.unwrap();
+        let mut files = read_standard(reader).await.unwrap();
 
         files.par_sort_unstable();
 
