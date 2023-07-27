@@ -12,7 +12,7 @@ struct Args {
     path: String,
 
     /// Output path. Defaults to res.txt
-    #[arg(short, long)]
+    #[arg(short, long, value_name = "OUTPUT_PATH")]
     output: Option<String>,
 
     /// Determines on which character to split the file to. Defaults to newline
@@ -22,6 +22,16 @@ struct Args {
     /// Determines how the output should be joined together. Defaults to newline
     #[arg(short = 'D', long, default_value_t = String::from("\n"))]
     output_delimiter: String,
+
+    /// Lowers memory usage, but takes a lot longer. Disabled by default, but enables if the file is
+    /// larger than 500MB
+    #[arg(short = 'L', long)]
+    low_memory_mode: bool,
+
+    /// Disables low memory usage even for files larger than 500MB. Has no effect for files
+    /// under 500MB
+    #[arg(short = 'l', long)]
+    disable_low_memory_mode: bool,
 }
 
 #[tokio::main]
