@@ -20,7 +20,7 @@ struct Args {
     delimiter: String,
 
     /// Determines how the output should be joined together. Defaults to newline
-    #[arg(short, long, default_value_t = String::from("\n"))]
+    #[arg(short = 'D', long, default_value_t = String::from("\n"))]
     output_delimiter: String,
 }
 
