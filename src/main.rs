@@ -4,8 +4,12 @@ use simple_logger::SimpleLogger;
 use std::path::Path;
 use tokio::fs::File;
 
-/// Sorts massive files alphabetically
+/// Sort large text files quickly
+///
+/// Allows you to sort files quickly. With a choice of either using
+/// a low-memory mode or standard mode
 #[derive(Parser, Debug)]
+#[command(author, version)]
 struct Args {
     /// Path to file
     path: String,
