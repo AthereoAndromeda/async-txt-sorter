@@ -30,6 +30,14 @@ I kinda needed one so I decide "hey, why not write one?"
 
 This is a toy project, not really designed to be used in production.
 
+## Modes
+- **Standard**  
+This mode copies and sorts the entire file in-memory. Pretty quick, but takes as much memory as the given file.
+
+- **Slow (Low-Memory)**  
+This mode writes the contents of the file into a temporary directory. It then sorts each file from there. This has less
+memory usage, but it is slower since it uses the file system rather than memory.
+
 ## Performance
 ~~It isn't that fast (because single-threaded) for large files (around 100MB+) 
 but at least it doesn't blow up your memory. The biggest bottleneck is reading. Might improve on I/O later on.~~
