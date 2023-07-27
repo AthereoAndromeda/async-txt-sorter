@@ -10,7 +10,15 @@ use std::path::Path;
 use tokio::{
     fs::File,
     io::{self, BufReader},
+    sync::RwLock,
 };
+
+#[macro_use]
+extern crate lazy_static;
+
+lazy_static! {
+    pub static ref OUTPUT_DELIMITER: RwLock<String> = RwLock::new("\n".to_string());
+}
 
 #[derive(Debug)]
 pub enum ReadResult {
@@ -65,6 +73,12 @@ pub async fn run(args: &Args, file: File, output_path: Option<&Path>) {
         Some(s) => Path::new(s).to_owned(),
         None => std::env::current_dir().unwrap().join("res.txt"),
     };
+
+    let mut a = OUTPUT_DELIMITER.write().await;
+    *a = args.output_delimiter.clone();
+    drop(a);
+
+    log::debug!("Assigned Delimiter: {}", OUTPUT_DELIMITER.read().await);
 
     match read_start(memory_mode, file, tmpdir_path).await.unwrap() {
         ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await,

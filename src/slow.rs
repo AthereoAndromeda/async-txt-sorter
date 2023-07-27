@@ -104,6 +104,6 @@ pub async fn sort(mut read_result: Vec<NamedReader<File>>, output_path: &Path) {
         output_writer.write_all(res.as_bytes()).await.unwrap();
     }
 
-    log::info!("Finished!");
     output_writer.flush().await.unwrap();
+    log::info!("Finished!");
 }
