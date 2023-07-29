@@ -12,6 +12,8 @@ use tokio::{
     },
 };
 
+use super::OUTPUT_DELIMITER;
+
 /// `tokio::io::BufReader` but with a path attached
 #[derive(Debug)]
 pub struct NamedReader<T> {
@@ -59,9 +61,11 @@ where
             map.insert(path.clone(), writer);
         }
 
+        let delim = OUTPUT_DELIMITER.read().await;
+
         let writer = map.get_mut(&path).unwrap();
         writer.write_all(line.as_bytes()).await?;
-        writer.write_all(b"\n").await?;
+        writer.write_all(delim.as_bytes()).await?;
     }
 
     let mut files = Vec::new();
