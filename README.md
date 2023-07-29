@@ -2,7 +2,7 @@
 Just a Rust CLI app that sorts large files alphabetically
 
 ```bash
-Sorts massive files alphabetically
+Sort large text files quickly
 
 Usage: async-txt-sorter [OPTIONS] <PATH>
 
@@ -21,7 +21,9 @@ Options:
   -l, --disable-low-memory-mode
           Disables low memory usage even for files larger than 500MB. Has no effect for files under 500MB
   -h, --help
-          Print help
+          Print help (see more with '--help')
+  -V, --version
+          Print version
 ```
 
 ## Why?
