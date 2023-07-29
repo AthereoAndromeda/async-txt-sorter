@@ -1,41 +1,11 @@
+mod args;
+
+use args::Args;
 use async_txt_sorter::{read_start, slow, standard, MemoryMode, ReadResult};
 use clap::Parser;
 use simple_logger::SimpleLogger;
 use std::path::Path;
 use tokio::fs::File;
-
-/// Sort large text files quickly
-///
-/// Allows you to sort files quickly. With a choice of either using
-/// a low-memory mode or standard mode
-#[derive(Parser, Debug)]
-#[command(author, version)]
-struct Args {
-    /// Path to file
-    path: String,
-
-    /// Output path. Defaults to res.txt
-    #[arg(short, long, value_name = "OUTPUT_PATH")]
-    output: Option<String>,
-
-    /// Determines on which character to split the file to. Defaults to newline
-    #[arg(short, long, default_value_t = String::from("\n"))]
-    delimiter: String,
-
-    /// Determines how the output should be joined together. Defaults to newline
-    #[arg(short = 'D', long, default_value_t = String::from("\n"))]
-    output_delimiter: String,
-
-    /// Lowers memory usage, but takes a lot longer. Disabled by default, but enables if the file is
-    /// larger than 500MB
-    #[arg(short = 'L', long)]
-    low_memory_mode: bool,
-
-    /// Disables low memory usage even for files larger than 500MB. Has no effect for files
-    /// under 500MB
-    #[arg(short = 'l', long)]
-    disable_low_memory_mode: bool,
-}
 
 fn get_memory_mode(args: &Args, file_size: u64) -> MemoryMode {
     const THRESHOLD: u64 = 1000 * 1000 * 500; // 500MB
