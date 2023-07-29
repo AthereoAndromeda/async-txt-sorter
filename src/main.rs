@@ -5,7 +5,10 @@ use async_txt_sorter::{read_start, slow, standard, MemoryMode, ReadResult};
 use clap::Parser;
 use simple_logger::SimpleLogger;
 use std::path::Path;
-use tokio::{fs::File, io};
+use tokio::{
+    fs::{File, OpenOptions},
+    io,
+};
 
 fn get_memory_mode(args: &Args, file_size: u64) -> MemoryMode {
     const THRESHOLD: u64 = 1000 * 1000 * 500; // 500MB
@@ -34,8 +37,52 @@ pub async fn recurse(input_path: &Path) -> io::Result<()> {
     log::info!("Entering Recursive Mode...");
     let mut dir = tokio::fs::read_dir(input_path).await?;
 
+    let mut files = Vec::new();
+
     while let Some(file) = dir.next_entry().await? {
         log::info!("{}", file.file_name().to_str().unwrap());
+
+        if file.file_type().await.unwrap().is_file() {
+            files.push(file);
+        }
+    }
+
+    let mut handles = Vec::new();
+
+    for f in files {
+        let input_path = input_path.canonicalize().unwrap();
+        println!("{}", input_path.display());
+
+        let base_path = input_path.join("..").join("res").canonicalize().unwrap();
+        println!("{}", base_path.display());
+
+        let path = input_path.join(f.file_name());
+
+        let h = tokio::spawn(async move {
+            let file = OpenOptions::new()
+                .read(true)
+                .write(false)
+                .open(&path)
+                .await
+                .unwrap();
+
+            let res = read_start(MemoryMode::Standard, file, &base_path)
+                .await
+                .unwrap();
+
+            match res {
+                ReadResult::StandardReadResult(r) => {
+                    standard::sort(r, &base_path.join(path.file_name().unwrap())).await;
+                }
+                _ => {}
+            }
+        });
+
+        handles.push(h);
+    }
+
+    for h in handles {
+        h.await.unwrap();
     }
 
     Ok(())
