@@ -1,5 +1,4 @@
-use crate::args::Args;
-use async_txt_sorter::MemoryMode;
+use crate::{args::Args, MemoryMode};
 
 pub fn get_memory_mode(args: &Args, file_size: u64) -> MemoryMode {
     const THRESHOLD: u64 = 1000 * 1000 * 500; // 500MB

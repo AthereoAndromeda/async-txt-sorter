@@ -1,11 +1,5 @@
-mod args;
-mod recursion;
-mod utils;
-
-use args::Args;
-use async_txt_sorter::{read_start, slow, standard, ReadResult};
+use async_txt_sorter::{recursion::recurse, Args};
 use clap::Parser;
-use recursion::recurse;
 use simple_logger::SimpleLogger;
 use std::path::Path;
 use tokio::fs::File;
@@ -15,15 +9,9 @@ async fn main() {
     SimpleLogger::new().env().init().unwrap();
     let args = Args::parse();
 
-    let output_path = match &args.output {
-        Some(s) => Path::new(s).to_owned(),
-        None => std::env::current_dir().unwrap().join("res.txt"),
-    };
-
     let input_path = Path::new(&args.path);
     let file = File::open(input_path).await.unwrap();
     let file_metadata = file.metadata().await.unwrap();
-    let file_size = file_metadata.len();
 
     // Do recursive sorting
     if file_metadata.is_dir() {
@@ -31,16 +19,7 @@ async fn main() {
         return;
     }
 
-    let memory_mode = utils::get_memory_mode(&args, file_size);
-
-    // Persist tmpdir at top scope
-    let tmpdir = tempfile::tempdir().unwrap();
-    let tmpdir_path = tmpdir.path();
-
-    match read_start(memory_mode, file, tmpdir_path).await.unwrap() {
-        ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await,
-        ReadResult::StandardReadResult(r) => standard::sort(r, &output_path).await,
-    };
+    async_txt_sorter::run(&args, file).await;
 }
 
 #[cfg(test)]

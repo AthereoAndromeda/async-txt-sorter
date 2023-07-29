@@ -1,5 +1,9 @@
+mod args;
+pub use args::Args;
+pub mod recursion;
 pub mod slow;
 pub mod standard;
+pub mod utils;
 
 use slow::NamedReader;
 use std::path::Path;
@@ -47,4 +51,23 @@ pub async fn read_start(
             Ok(ReadResult::StandardReadResult(content))
         }
     }
+}
+
+pub async fn run(args: &Args, file: File) {
+    // Persist tmpdir at top scope
+    let tmpdir = tempfile::tempdir().unwrap();
+    let tmpdir_path = tmpdir.path();
+
+    let file_size = file.metadata().await.unwrap().len();
+    let memory_mode = utils::get_memory_mode(&args, file_size);
+
+    let output_path = match &args.output {
+        Some(s) => Path::new(s).to_owned(),
+        None => std::env::current_dir().unwrap().join("res.txt"),
+    };
+
+    match read_start(memory_mode, file, tmpdir_path).await.unwrap() {
+        ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await,
+        ReadResult::StandardReadResult(r) => standard::sort(r, &output_path).await,
+    };
 }

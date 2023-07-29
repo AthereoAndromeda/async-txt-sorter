@@ -1,4 +1,4 @@
-use async_txt_sorter::{read_start, slow, standard, ReadResult};
+use crate::{read_start, slow, standard, ReadResult};
 use tokio::fs::OpenOptions;
 
 use crate::{args::Args, utils};
