@@ -53,7 +53,7 @@ pub async fn read_start(
     }
 }
 
-pub async fn run(args: &Args, file: File) {
+pub async fn run(args: &Args, file: File, output_path: Option<&Path>) {
     // Persist tmpdir at top scope
     let tmpdir = tempfile::tempdir().unwrap();
     let tmpdir_path = tmpdir.path();
@@ -61,7 +61,7 @@ pub async fn run(args: &Args, file: File) {
     let file_size = file.metadata().await.unwrap().len();
     let memory_mode = utils::get_memory_mode(&args, file_size);
 
-    let output_path = match &args.output {
+    let output_path = match output_path {
         Some(s) => Path::new(s).to_owned(),
         None => std::env::current_dir().unwrap().join("res.txt"),
     };

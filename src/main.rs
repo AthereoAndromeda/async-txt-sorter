@@ -19,7 +19,7 @@ async fn main() {
         return;
     }
 
-    async_txt_sorter::run(&args, file).await;
+    async_txt_sorter::run(&args, file, None).await;
 }
 
 #[cfg(test)]

@@ -1,7 +1,6 @@
-use crate::{read_start, slow, standard, ReadResult};
 use tokio::fs::OpenOptions;
 
-use crate::{args::Args, utils};
+use crate::args::Args;
 use std::{
     io,
     path::Path,
@@ -31,7 +30,6 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
     let base_path = &input_path.join("..").join("res");
     match tokio::fs::read_dir(base_path).await {
         Ok(_) => {}
-
         Err(_) => {
             log::info!("Creating `res` dir");
             tokio::fs::create_dir(base_path).await?;
@@ -45,13 +43,11 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
 
     for f in files {
         // Clone to avoid async issues
-        let input_path = input_path.clone();
         let base_path = base_path.clone();
-
-        let path = input_path.join(f.file_name());
-        let memory_mode = utils::get_memory_mode(args, f.metadata().await.unwrap().len());
-
+        let args = args.clone();
         let files_finished = Arc::clone(&files_finished);
+
+        let path = base_path.join(f.file_name());
 
         let h = tokio::spawn(async move {
             let file = OpenOptions::new()
@@ -61,17 +57,15 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
                 .await
                 .unwrap();
 
-            let res = read_start(memory_mode, file, &base_path).await.unwrap();
-            let output_path = &base_path.join(path.file_name().unwrap());
-
-            match res {
-                ReadResult::StandardReadResult(r) => standard::sort(r, output_path).await,
-                ReadResult::SlowReadResult(r) => slow::sort(r, output_path).await,
-            }
+            super::run(&args, file, Some(&path)).await;
 
             // Keep count of files
             let ff = files_finished.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-            log::info!("Files Sorted: {}/{}", ff + 1, file_count);
+            log::info!(
+                "Files Sorted: {}/{}",
+                ff + 1, /* add 1 since ff is the old value */
+                file_count
+            );
         });
 
         handles.push(h);
