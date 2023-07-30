@@ -12,7 +12,7 @@ use tokio::{
     },
 };
 
-/// Tokio BufReader but with a path attached
+/// `tokio::io::BufReader` but with a path attached
 #[derive(Debug)]
 pub struct NamedReader<T> {
     path: PathBuf,
@@ -35,10 +35,7 @@ where
     while let Some(line) = lines.next_line().await? {
         let first_char = line.chars().next();
 
-        let first_char = match first_char {
-            Some(c) => c,
-            None => continue,
-        };
+        let Some(first_char) = first_char else { continue };
 
         // Fallback for invalid file names
         let first_char = if first_char.is_alphanumeric() {
@@ -47,7 +44,7 @@ where
             '-'
         };
 
-        let path = tmpdir_path.join(&format!("{}.txt", first_char));
+        let path = tmpdir_path.join(&format!("{first_char}.txt"));
 
         if !map.contains_key(&path) {
             let file = OpenOptions::new()
@@ -99,12 +96,12 @@ pub async fn sort(mut read_result: Vec<NamedReader<File>>, output_path: &Path) {
         let mut reader = named_reader.reader;
         reader.read_to_string(&mut buf).await.unwrap();
 
-        let mut s_vec = buf.split("\n").collect::<Vec<_>>();
+        let mut s_vec = buf.split('\n').collect::<Vec<_>>();
         s_vec.par_sort_unstable();
 
         let res = s_vec.join("\n");
 
-        output_writer.write_all(res.as_bytes()).await.unwrap()
+        output_writer.write_all(res.as_bytes()).await.unwrap();
     }
 
     log::info!("Finished!");

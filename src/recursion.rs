@@ -28,13 +28,11 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
 
     // Check if output dir exists, create if not
     let base_path = &input_path.join("..").join("res");
-    match tokio::fs::read_dir(base_path).await {
-        Ok(_) => {}
-        Err(_) => {
-            log::info!("Creating `res` dir");
-            tokio::fs::create_dir(base_path).await?;
-        }
-    };
+
+    if tokio::fs::read_dir(base_path).await.is_err() {
+        log::info!("Creating `res` dir");
+        tokio::fs::create_dir(base_path).await?;
+    }
 
     let mut handles = Vec::new();
 
