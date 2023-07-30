@@ -4,7 +4,7 @@ use clap::Parser;
 ///
 /// Allows you to sort files quickly. With a choice of either using
 /// a low-memory mode or standard mode
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(author, version)]
 pub struct Args {
     /// Path to file
