@@ -1,3 +1,4 @@
+use async_recursion::async_recursion;
 use thiserror::Error;
 use tokio::{fs::OpenOptions, io};
 
@@ -20,7 +21,8 @@ pub enum RecurseError {
     JoinError(#[from] tokio::task::JoinError),
 }
 
-pub async fn recurse(input_path: &Path, args: &Args) -> Result<(), RecurseError> {
+#[async_recursion]
+pub async fn recurse(base_path: &Path, input_path: &Path, args: &Args) -> Result<(), RecurseError> {
     log::info!("Entering Recursive Mode...");
 
     // Read input dir
@@ -30,25 +32,32 @@ pub async fn recurse(input_path: &Path, args: &Args) -> Result<(), RecurseError>
     let mut files = Vec::new();
 
     while let Some(file) = dir.next_entry().await? {
+        let file_type = file.file_type().await?;
+        let file_path = file.path();
         log::info!(
             "File detected: {}",
-            file.file_name()
-                .to_str()
-                .ok_or(RecurseError::NonUtf8FileName)?
+            // file.file_name()
+            //     .to_str()
+            //     .ok_or(RecurseError::NonUtf8FileName)?
+            file_path.display()
         );
 
-        // Only push files
-        // TODO: Add actual recursion
-        if file.file_type().await?.is_file() {
+        if file_type.is_file() {
+            // Only push files
             files.push(file);
+        } else if file_type.is_dir() {
+            // Recurse inside dir
+            recurse(base_path, &file_path, args).await?;
         }
     }
 
     // Check if output dir exists, create if not
     let output_path = match &args.output {
         Some(p) => Path::new(p).to_owned(),
-        None => input_path.join("..").join("res"),
+        None => base_path.join("..").join("res"),
     };
+
+    println!("aa: {}", output_path.display());
 
     let output_path = &output_path;
 

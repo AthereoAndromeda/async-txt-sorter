@@ -19,10 +19,12 @@ async fn main() {
     };
 
     let file_metadata = file.metadata().await.unwrap();
+    let base_path = input_path.canonicalize().unwrap().join("..");
+    println!("base_path: {}", base_path.display());
 
     // Do recursive sorting
     if file_metadata.is_dir() {
-        match recurse(input_path, &args).await {
+        match recurse(&base_path, input_path, &args).await {
             Ok(_) => {}
             Err(e) => {
                 log::error!("{e}\n");
