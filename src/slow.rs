@@ -116,3 +116,50 @@ where
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use super::{read, sort, NamedReader};
+    use tokio::io::{BufReader, BufWriter};
+
+    // #[tokio::test]
+    // async fn read_test() {
+    //     let s = "a\naa\nb\nc".to_string();
+    //     let reader = BufReader::new(s.as_bytes());
+
+    //     let tmpdir = tempfile::tempdir().unwrap();
+    //     let tmpdir_path = tmpdir.path();
+    //     let g = read(reader, tmpdir_path).await.unwrap();
+
+    //     let expected = vec![
+    //         NamedReader {
+    //             path
+    //         }
+    //     ]
+    // }
+
+    // #[tokio::test]
+    // async fn sort_test() {
+    //     let a = vec![
+    //         NamedReader {
+    //             path: Path::new("a.txt").to_path_buf(),
+    //             reader: BufReader::new("a\naa".as_bytes()),
+    //         },
+    //         NamedReader {
+    //             path: Path::new("b.txt").to_path_buf(),
+    //             reader: BufReader::new("b".as_bytes()),
+    //         },
+    //     ];
+
+    //     let mut writer = BufWriter::new(Vec::new());
+    //     sort(a, &mut writer).await.unwrap();
+    //     let inner = writer.into_inner();
+
+    //     let processed = String::from_utf8_lossy(&inner).to_string();
+
+    //     let expected = "a\naa\nb";
+    //     assert_eq!(expected.as_bytes(), processed.as_bytes());
+    // }
+}
