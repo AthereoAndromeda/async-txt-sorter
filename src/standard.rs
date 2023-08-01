@@ -1,6 +1,8 @@
 use rayon::slice::ParallelSliceMut;
 use tokio::io::{self, AsyncBufRead, AsyncBufReadExt, AsyncWrite, AsyncWriteExt};
 
+use crate::SortError;
+
 /// Read file async and return lines. Stores entire file content in-memory.
 /// Use with care with large files
 pub async fn read<R: AsyncBufRead + Unpin>(reader: R) -> io::Result<Vec<String>> {
@@ -28,15 +30,19 @@ pub async fn read<R: AsyncBufRead + Unpin>(reader: R) -> io::Result<Vec<String>>
     Ok(content)
 }
 
-pub async fn sort(mut content: Vec<String>, mut writer: impl AsyncWrite + Unpin) {
+pub async fn sort(
+    mut content: Vec<String>,
+    mut writer: impl AsyncWrite + Unpin,
+) -> Result<(), SortError> {
     log::info!("Sorting...");
     content.par_sort_unstable();
 
     let output_content = content.join("\n");
     let output_content = output_content.as_bytes();
 
-    writer.write_all(output_content).await.unwrap();
-    writer.flush().await.unwrap();
+    writer.write_all(output_content).await?;
+    writer.flush().await?;
 
     log::info!("Finished!");
+    Ok(())
 }

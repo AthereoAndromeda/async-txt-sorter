@@ -1,13 +1,26 @@
-use tokio::fs::OpenOptions;
+use thiserror::Error;
+use tokio::{fs::OpenOptions, io};
 
 use crate::args::Args;
 use std::{
-    io,
     path::Path,
     sync::{atomic::AtomicU64, Arc},
 };
 
-pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
+#[derive(Debug, Error)]
+/// Possible Errors when recursing through a directory
+pub enum RecurseError {
+    #[error("IO Error: {0}")]
+    IoError(#[from] io::Error),
+
+    #[error("File Name is not UTF-8 Valid")]
+    NonUtf8FileName,
+
+    #[error("Tokio Task Error: {0}")]
+    JoinError(#[from] tokio::task::JoinError),
+}
+
+pub async fn recurse(input_path: &Path, args: &Args) -> Result<(), RecurseError> {
     log::info!("Entering Recursive Mode...");
 
     // Read input dir
@@ -17,11 +30,16 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
     let mut files = Vec::new();
 
     while let Some(file) = dir.next_entry().await? {
-        log::info!("{}", file.file_name().to_str().unwrap());
+        log::info!(
+            "File detected: {}",
+            file.file_name()
+                .to_str()
+                .ok_or(RecurseError::NonUtf8FileName)?
+        );
 
         // Only push files
         // TODO: Add actual recursion
-        if file.file_type().await.unwrap().is_file() {
+        if file.file_type().await?.is_file() {
             files.push(file);
         }
     }
@@ -62,7 +80,9 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
                 .await
                 .unwrap();
 
-            super::run(&args, file, Some(&output_files_path)).await;
+            super::run(&args, file, Some(&output_files_path))
+                .await
+                .unwrap();
 
             // Keep count of files
             let ff = files_finished.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -77,7 +97,7 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
     }
 
     for h in handles {
-        h.await.unwrap();
+        h.await?;
     }
 
     Ok(())

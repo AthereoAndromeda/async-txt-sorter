@@ -12,6 +12,8 @@ use tokio::{
     },
 };
 
+use crate::SortError;
+
 /// `tokio::io::BufReader` but with a path attached
 #[derive(Debug)]
 pub struct NamedReader<T> {
@@ -83,9 +85,12 @@ where
     Ok(files)
 }
 
-pub async fn sort(mut read_result: Vec<NamedReader<File>>, output_path: &Path) {
+pub async fn sort(
+    mut read_result: Vec<NamedReader<File>>,
+    output_path: &Path,
+) -> Result<(), SortError> {
     log::info!("Sorting and Writing...");
-    let mut output_writer = BufWriter::new(File::create(output_path).await.unwrap());
+    let mut output_writer = BufWriter::new(File::create(output_path).await?);
 
     // sort alphabetically
     read_result.par_sort_by(|a, b| a.path.cmp(&b.path));
@@ -94,16 +99,18 @@ pub async fn sort(mut read_result: Vec<NamedReader<File>>, output_path: &Path) {
         let mut buf = String::new();
 
         let mut reader = named_reader.reader;
-        reader.read_to_string(&mut buf).await.unwrap();
+        reader.read_to_string(&mut buf).await?;
 
         let mut s_vec = buf.split('\n').collect::<Vec<_>>();
         s_vec.par_sort_unstable();
 
         let res = s_vec.join("\n");
 
-        output_writer.write_all(res.as_bytes()).await.unwrap();
+        output_writer.write_all(res.as_bytes()).await?;
     }
 
     log::info!("Finished!");
-    output_writer.flush().await.unwrap();
+    output_writer.flush().await?;
+
+    Ok(())
 }

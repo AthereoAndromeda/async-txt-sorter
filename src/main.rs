@@ -10,16 +10,30 @@ async fn main() {
     let args = Args::parse();
 
     let input_path = Path::new(&args.path);
-    let file = File::open(input_path).await.unwrap();
+    let file = match File::open(input_path).await {
+        Ok(f) => f,
+        Err(e) => {
+            log::error!("IO Error: {e}\n");
+            panic!("{}", e);
+        }
+    };
+
     let file_metadata = file.metadata().await.unwrap();
 
     // Do recursive sorting
     if file_metadata.is_dir() {
-        recurse(input_path, &args).await.unwrap();
+        match recurse(input_path, &args).await {
+            Ok(_) => {}
+            Err(e) => {
+                log::error!("{e}\n");
+                panic!("{}", e);
+            }
+        };
+
         return;
     }
 
-    async_txt_sorter::run(&args, file, None).await;
+    async_txt_sorter::run(&args, file, None).await.unwrap();
 }
 
 #[cfg(test)]
