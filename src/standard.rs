@@ -1,7 +1,5 @@
-use std::path::Path;
-
 use rayon::slice::ParallelSliceMut;
-use tokio::io::{self, AsyncBufRead, AsyncBufReadExt};
+use tokio::io::{self, AsyncBufRead, AsyncBufReadExt, AsyncWrite, AsyncWriteExt};
 
 /// Read file async and return lines. Stores entire file content in-memory.
 /// Use with care with large files
@@ -30,14 +28,15 @@ pub async fn read<R: AsyncBufRead + Unpin>(reader: R) -> io::Result<Vec<String>>
     Ok(content)
 }
 
-pub async fn sort(mut content: Vec<String>, output_path: &Path) {
+pub async fn sort(mut content: Vec<String>, mut writer: impl AsyncWrite + Unpin) {
     log::info!("Sorting...");
     content.par_sort_unstable();
 
-    log::info!("Writing Output...");
-    tokio::fs::write(&output_path, content.join("\n").as_bytes())
-        .await
-        .unwrap();
+    let output_content = content.join("\n");
+    let output_content = output_content.as_bytes();
+
+    writer.write_all(output_content).await.unwrap();
+    writer.flush().await.unwrap();
 
     log::info!("Finished!");
 }

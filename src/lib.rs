@@ -9,7 +9,7 @@ use slow::NamedReader;
 use std::path::Path;
 use tokio::{
     fs::File,
-    io::{self, BufReader},
+    io::{self, BufReader, BufWriter},
 };
 
 #[derive(Debug)]
@@ -68,6 +68,13 @@ pub async fn run(args: &Args, file: File, output_path: Option<&Path>) {
 
     match read_start(memory_mode, file, tmpdir_path).await.unwrap() {
         ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await,
-        ReadResult::StandardReadResult(r) => standard::sort(r, &output_path).await,
+        ReadResult::StandardReadResult(r) => {
+            let file = File::create(&output_path).await.unwrap();
+            let mut writer = BufWriter::new(file);
+
+            log::info!("Writing Output...");
+            standard::sort(r, &mut writer).await;
+            log::info!("Finished!");
+        }
     };
 }
