@@ -73,7 +73,7 @@ pub enum RunError {
 
 pub async fn run(args: &Args, file: File, output_path: Option<&Path>) -> Result<(), RunError> {
     // Persist tmpdir at top scope
-    let tmpdir = tempfile::tempdir().unwrap();
+    let tmpdir = tempfile::tempdir()?;
     let tmpdir_path = tmpdir.path();
 
     let file_size = file.metadata().await?.len();
@@ -81,7 +81,7 @@ pub async fn run(args: &Args, file: File, output_path: Option<&Path>) -> Result<
 
     let output_path = match output_path {
         Some(s) => Path::new(s).to_owned(),
-        None => std::env::current_dir().unwrap().join("res.txt"),
+        None => std::env::current_dir()?.join("res.txt"),
     };
 
     let output_writer = BufWriter::new(File::create(&output_path).await?);
