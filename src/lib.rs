@@ -7,10 +7,18 @@ pub mod utils;
 
 use slow::NamedReader;
 use std::path::Path;
+use thiserror::Error;
 use tokio::{
     fs::File,
     io::{self, BufReader, BufWriter},
 };
+
+#[derive(Debug, Error)]
+/// Represents possible errors when executing sorts
+pub enum SortError {
+    #[error("IO Error: {0}")]
+    IoError(#[from] io::Error),
+}
 
 #[derive(Debug)]
 pub enum ReadResult {
@@ -53,12 +61,22 @@ pub async fn read_start(
     }
 }
 
-pub async fn run(args: &Args, file: File, output_path: Option<&Path>) {
+#[derive(Debug, thiserror::Error)]
+/// Errors when running
+pub enum RunError {
+    #[error("Tokio IoError: {0}")]
+    IoError(#[from] tokio::io::Error),
+
+    #[error("Error during sorting: {0}")]
+    SortError(#[from] SortError),
+}
+
+pub async fn run(args: &Args, file: File, output_path: Option<&Path>) -> Result<(), RunError> {
     // Persist tmpdir at top scope
     let tmpdir = tempfile::tempdir().unwrap();
     let tmpdir_path = tmpdir.path();
 
-    let file_size = file.metadata().await.unwrap().len();
+    let file_size = file.metadata().await?.len();
     let memory_mode = utils::get_memory_mode(args, file_size);
 
     let output_path = match output_path {
@@ -66,15 +84,17 @@ pub async fn run(args: &Args, file: File, output_path: Option<&Path>) {
         None => std::env::current_dir().unwrap().join("res.txt"),
     };
 
-    match read_start(memory_mode, file, tmpdir_path).await.unwrap() {
-        ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await,
+    match read_start(memory_mode, file, tmpdir_path).await? {
+        ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await?,
         ReadResult::StandardReadResult(r) => {
-            let file = File::create(&output_path).await.unwrap();
+            let file = File::create(&output_path).await?;
             let mut writer = BufWriter::new(file);
 
             log::info!("Writing Output...");
-            standard::sort(r, &mut writer).await;
+            standard::sort(r, &mut writer).await?;
             log::info!("Finished!");
         }
     };
+
+    Ok(())
 }
