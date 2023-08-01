@@ -7,8 +7,8 @@ use std::{
 use tokio::{
     fs::{File, OpenOptions},
     io::{
-        self, AsyncBufRead, AsyncBufReadExt, AsyncReadExt, AsyncSeekExt, AsyncWriteExt, BufReader,
-        BufWriter,
+        self, AsyncBufRead, AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncSeekExt, AsyncWrite,
+        AsyncWriteExt, BufReader, BufWriter,
     },
 };
 
@@ -85,12 +85,14 @@ where
     Ok(files)
 }
 
-pub async fn sort(
-    mut read_result: Vec<NamedReader<File>>,
-    output_path: &Path,
-) -> Result<(), SortError> {
+pub async fn sort<T>(
+    mut read_result: Vec<NamedReader<T>>,
+    mut writer: impl AsyncWrite + Unpin,
+) -> Result<(), SortError>
+where
+    T: Send + AsyncRead + Unpin,
+{
     log::info!("Sorting and Writing...");
-    let mut output_writer = BufWriter::new(File::create(output_path).await?);
 
     // sort alphabetically
     read_result.par_sort_by(|a, b| a.path.cmp(&b.path));
@@ -106,11 +108,11 @@ pub async fn sort(
 
         let res = s_vec.join("\n");
 
-        output_writer.write_all(res.as_bytes()).await?;
+        writer.write_all(res.as_bytes()).await?;
     }
 
     log::info!("Finished!");
-    output_writer.flush().await?;
+    writer.flush().await?;
 
     Ok(())
 }

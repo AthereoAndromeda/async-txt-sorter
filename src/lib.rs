@@ -84,17 +84,13 @@ pub async fn run(args: &Args, file: File, output_path: Option<&Path>) -> Result<
         None => std::env::current_dir().unwrap().join("res.txt"),
     };
 
-    match read_start(memory_mode, file, tmpdir_path).await? {
-        ReadResult::SlowReadResult(r) => slow::sort(r, &output_path).await?,
-        ReadResult::StandardReadResult(r) => {
-            let file = File::create(&output_path).await?;
-            let mut writer = BufWriter::new(file);
+    let output_writer = BufWriter::new(File::create(&output_path).await?);
 
-            log::info!("Writing Output...");
-            standard::sort(r, &mut writer).await?;
-            log::info!("Finished!");
-        }
+    match read_start(memory_mode, file, tmpdir_path).await? {
+        ReadResult::SlowReadResult(r) => slow::sort(r, output_writer).await?,
+        ReadResult::StandardReadResult(r) => standard::sort(r, output_writer).await?,
     };
 
+    log::info!("Finished!");
     Ok(())
 }
