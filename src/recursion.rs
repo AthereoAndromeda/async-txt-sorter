@@ -27,11 +27,16 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
     }
 
     // Check if output dir exists, create if not
-    let base_path = &input_path.join("..").join("res");
+    let output_path = match &args.output {
+        Some(p) => Path::new(p).to_owned(),
+        None => input_path.join("..").join("res"),
+    };
 
-    if tokio::fs::read_dir(base_path).await.is_err() {
-        log::info!("Creating `res` dir");
-        tokio::fs::create_dir(base_path).await?;
+    let output_path = &output_path;
+
+    if tokio::fs::read_dir(output_path).await.is_err() {
+        log::info!("Creating {} dir", output_path.display());
+        tokio::fs::create_dir(output_path).await?;
     }
 
     let mut handles = Vec::new();
@@ -41,21 +46,23 @@ pub async fn recurse(input_path: &Path, args: &Args) -> io::Result<()> {
 
     for f in files {
         // Clone to avoid async issues
-        let base_path = base_path.clone();
+        let base_path = output_path.clone();
         let args = args.clone();
         let files_finished = Arc::clone(&files_finished);
 
-        let path = base_path.join(f.file_name());
+        let input_files_path = input_path.join(f.file_name());
+        let output_files_path = base_path.join(f.file_name());
+        println!("{}", input_files_path.display());
 
         let h = tokio::spawn(async move {
             let file = OpenOptions::new()
                 .read(true)
                 .write(false)
-                .open(&path)
+                .open(&input_files_path)
                 .await
                 .unwrap();
 
-            super::run(&args, file, Some(&path)).await;
+            super::run(&args, file, Some(&output_files_path)).await;
 
             // Keep count of files
             let ff = files_finished.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
