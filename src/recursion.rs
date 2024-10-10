@@ -1,7 +1,7 @@
 use thiserror::Error;
 use tokio::{fs::OpenOptions, io};
 
-use crate::args::Args;
+use crate::cli::Args;
 use std::{
     path::Path,
     sync::{atomic::AtomicU64, Arc},

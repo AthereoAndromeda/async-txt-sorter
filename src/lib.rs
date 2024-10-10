@@ -1,10 +1,10 @@
-mod args;
-pub use args::Args;
 pub mod recursion;
 pub mod slow;
 pub mod standard;
 pub mod utils;
+pub mod cli;
 
+pub use cli::Args;
 use slow::NamedReader;
 use std::path::Path;
 use thiserror::Error;
