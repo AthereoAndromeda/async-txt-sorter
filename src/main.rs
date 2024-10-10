@@ -41,13 +41,24 @@ mod test {
     use async_txt_sorter::standard;
     use rayon::slice::ParallelSliceMut;
     use tokio::io::BufReader;
+    use std::io::Cursor;
 
     const EXPECTED_ANSWER: &[u8; 189] = include_bytes!("../test/correct.txt");
     const TEST_FILE: &[u8; 189] = include_bytes!("../test/text.txt");
 
     #[tokio::test]
     async fn integration_test() {
+        // TEST: BufReader Type
         let reader = BufReader::new(&TEST_FILE[..]);
+        let mut files = standard::read(reader).await.unwrap();
+
+        files.par_sort_unstable();
+
+        let res = files.join("\n");
+        assert_eq!(&res.as_bytes(), EXPECTED_ANSWER);
+        
+        // TEST: Cursor Type
+        let reader = Cursor::new(&TEST_FILE[..]);
         let mut files = standard::read(reader).await.unwrap();
 
         files.par_sort_unstable();
