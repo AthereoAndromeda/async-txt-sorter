@@ -1,5 +1,7 @@
 /target
 /tmp
+/.direnv
+
 realhuman_*
 rockyou.txt
 aaaaa.txt
